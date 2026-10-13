@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FB Auto Reporter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 36px 40px;
+      width: 460px;
+      max-width: 95vw;
+    }
+    h1 { font-size: 1.3rem; margin-bottom: 8px; color: #fff; }
+    p.sub { font-size: 0.85rem; color: #888; margin-bottom: 24px; }
+    input[type="url"] {
+      width: 100%;
+      padding: 12px 14px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input[type="url"]:focus { border-color: #555; }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1877f2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #145fc7; }
+    button:disabled { background: #333; cursor: not-allowed; }
+    #status {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    #status.success { background: #0a2e1a; border: 1px solid #1a6b3a; color: #4caf7a; }
+    #status.error   { background: #2e0a0a; border: 1px solid #6b1a1a; color: #cf6679; }
+    #status.loading { background: #1a1a2e; border: 1px solid #2a2a6b; color: #8888cf; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🐦‍⬛ FB Auto Reporter</h1>
+    <p class="sub">Facebook প্রোফাইল লিংক দাও — বাকিটা আমি করব।</p>
+
+    <input type="url" id="url-input" placeholder="https://www.facebook.com/username" />
+    <button id="submit-btn" onclick="submitReport()">Report করো</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    async function submitReport() {
+      const url = document.getElementById("url-input").value.trim();
+      const status = document.getElementById("status");
+      const btn = document.getElementById("submit-btn");
+
+      if (!url) {
+        showStatus("URL দাও আগে।", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      showStatus("⏳ Browser চালু হচ্ছে, report করছে...", "loading");
+
+      try {
+        const res = await fetch("/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        showStatus(
+          data.success ? "✅ " + data.message : "❌ " + data.message,
+          data.success ? "success" : "error"
+        );
+      } catch (e) {
+        showStatus("❌ Server error: " + e.message, "error");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = type;
+      el.style.display = "block";
+    }
+
+    document.getElementById("url-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") submitReport();
+    });
+  </script>
+</body>
+  </html>
